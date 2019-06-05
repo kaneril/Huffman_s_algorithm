@@ -32,12 +32,10 @@ namespace Huffman_s_algorithm
                 }
             }
         }
-
         static void EncryptText()
         {
             var NormalText = ReadText();
             var symbols = ReadSymbols(NormalText);
-            Console.WriteLine($"{NormalText}");
             symbols = MakeSymbolsTree(symbols);
             Console.WriteLine("Введите путь к файлу с закодированным текстом");
             var path = Console.ReadLine();
@@ -53,7 +51,6 @@ namespace Huffman_s_algorithm
             DecryptText = DecryptText.Split('\n')[1];
             var NormalText = MakeDecryptText(symbols, DecryptText);
             WriteNormalText(NormalText);
-
         }        
         static List<Symbol> ReadSymbols(string NormalText)
         {
@@ -114,10 +111,6 @@ namespace Huffman_s_algorithm
                 SymbolsNodeList.RemoveRange(0, 2);
                 SymbolsNodeListInsert(SymbolsNodeList, node);
             }
-            foreach (var i in SymbolsNodeList[0].children)
-            {
-                Console.WriteLine($"{(char)i.name} {i.frequency} {i.code} {i.level}");
-            }
             return SymbolsNodeList[0].children;
         }
         static void WriteSymbolsTree(string path, List<Symbol> symbols)
@@ -161,7 +154,6 @@ namespace Huffman_s_algorithm
                     {
                         var s = FindSymbols(NormalText[i], symbols);
                         sw.Write(s);
-                        Console.WriteLine($"{s}");
                     }
                 }
             }
