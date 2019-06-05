@@ -9,7 +9,6 @@ namespace Huffman_s_algorithm
 {
     class Program
     {
-
         static void Main(string[] args)
         {
             while (true)
@@ -36,7 +35,7 @@ namespace Huffman_s_algorithm
 
         static void EncryptText()
         {
-            var NormalText = ReadNormalText();
+            var NormalText = ReadText();
             var symbols = ReadSymbols(NormalText);
             Console.WriteLine($"{NormalText}");
             symbols = MakeSymbolsTree(symbols);
@@ -44,42 +43,25 @@ namespace Huffman_s_algorithm
             var path = Console.ReadLine();
             WriteInfo(symbols);
             WriteSymbolsTree(path, symbols);
-            WriteEncryptText(path,  NormalText, symbols);
+            WriteEncryptText(path, NormalText, symbols);
         }
         static void DecryptText()
         {
+            var DecryptText = ReadText();
+            var symbols = ReadSymbolsTree(DecryptText.Split('\r')[0]);
+            WriteInfo(symbols);
+            DecryptText = DecryptText.Split('\n')[1];
+            var NormalText = MakeDecryptText(symbols, DecryptText);
+            WriteNormalText(NormalText);
 
-        }
-        static string ReadNormalText()
-        {
-            Console.WriteLine("Введите путь к файлу с кодируемым текстом");
-            var path = Console.ReadLine();
-            string NormalText = "";
-            try
-            {
-                using (StreamReader sr = new StreamReader(path, System.Text.Encoding.Default))
-                {
-                    int s;
-                    while ((s = sr.Read()) != -1)
-                    {
-                        NormalText += (char)s;
-                    }
-                    sr.Close();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            return NormalText;
-        }
+        }        
         static List<Symbol> ReadSymbols(string NormalText)
         {
             List<Symbol> symbols = new List<Symbol>();
             foreach (var s in NormalText)
             {
-                MakeSymbolsList(s, symbols);                
-            }                          
+                MakeSymbolsList(s, symbols);
+            }
             return symbols;
         }
         static void MakeSymbolsList(int s, List<Symbol> symbols)
@@ -112,13 +94,13 @@ namespace Huffman_s_algorithm
         }
         static void SymbolsNodeListInsert(List<SymbolNode> SymbolsNodeList, SymbolNode node)
         {
-            int i ;
-            for (i = 0; i< SymbolsNodeList.Count;i++)
+            int i;
+            for (i = 0; i < SymbolsNodeList.Count; i++)
             {
-                if (SymbolsNodeList[i].frequency>=node.frequency)
+                if (SymbolsNodeList[i].frequency >= node.frequency)
                 {
-                    break;                    
-                }                
+                    break;
+                }
             }
             SymbolsNodeList.Insert(i, node);
         }
@@ -126,13 +108,13 @@ namespace Huffman_s_algorithm
         {
             symbols.Sort(new SymbolComparer());
             var SymbolsNodeList = MakeSymbolsNodeList(symbols);
-            while((SymbolsNodeList.Count!=1))
+            while ((SymbolsNodeList.Count != 1))
             {
                 var node = new SymbolNode(SymbolsNodeList[0], SymbolsNodeList[1]);
                 SymbolsNodeList.RemoveRange(0, 2);
                 SymbolsNodeListInsert(SymbolsNodeList, node);
             }
-            foreach(var i in SymbolsNodeList[0].children)
+            foreach (var i in SymbolsNodeList[0].children)
             {
                 Console.WriteLine($"{(char)i.name} {i.frequency} {i.code} {i.level}");
             }
@@ -147,9 +129,10 @@ namespace Huffman_s_algorithm
                     foreach (var i in symbols)
                     {
                         var SymbolCode = Convert.ToString(i.name, 2);
-                        SymbolCode = new String ('0',8-SymbolCode.Length)+SymbolCode;
+                        SymbolCode = SymbolCode.PadLeft(8, '0');
                         sw.Write(i.level + i.code + SymbolCode);
                     }
+                    sw.Write("\r\n");
                 }
             }
             catch (Exception e)
@@ -159,9 +142,9 @@ namespace Huffman_s_algorithm
         }
         static string FindSymbols(char s, List<Symbol> symbols)
         {
-            foreach(var i in symbols)
+            foreach (var i in symbols)
             {
-                if ((char)i.name==s)
+                if ((char)i.name == s)
                 {
                     return i.code;
                 }
@@ -172,11 +155,11 @@ namespace Huffman_s_algorithm
         {
             try
             {
-                using (StreamWriter sw = new StreamWriter(path, false, System.Text.Encoding.Default))
+                using (StreamWriter sw = new StreamWriter(path, true, System.Text.Encoding.Default))
                 {
                     for (var i = 0; i < NormalText.Length; i++)
                     {
-                        var s =FindSymbols(NormalText[i],symbols);
+                        var s = FindSymbols(NormalText[i], symbols);
                         sw.Write(s);
                         Console.WriteLine($"{s}");
                     }
@@ -194,10 +177,83 @@ namespace Huffman_s_algorithm
                 using (StreamWriter sw = new StreamWriter("info.txt", false, System.Text.Encoding.Default))
                 {
                     sw.WriteLine($"Длина алфавита {symbols.Count}");
-                    foreach(var i in symbols)
+                    foreach (var i in symbols)
                     {
                         sw.WriteLine($"Символ {(char)i.name} Частота {i.frequency} Код {i.code} Уровень {i.level}");
                     }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+        static string ReadText()
+        {
+            Console.WriteLine("Введите путь к файлу с исходным текстом");
+            var path = Console.ReadLine();
+            string DecryptText = "";
+            try
+            {
+                using (StreamReader sr = new StreamReader(path, System.Text.Encoding.Default))
+                {
+                    DecryptText = sr.ReadToEnd();
+                    sr.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            return DecryptText;
+        }
+        static List<Symbol> ReadSymbolsTree(string DecryptText)
+        {
+            List<Symbol> symbols = new List<Symbol>();
+            var i = 0;
+            while (i < DecryptText.Length)
+            {
+                var level = 0;
+                while (DecryptText[i] != '1')
+                {
+                    level++;
+                    i++;
+                }
+                var code = DecryptText.Substring(i + 1, level);
+                var name = Convert.ToUInt32(DecryptText.Substring(i + 1 + level, 8), 2);
+                Symbol ss = new Symbol((int)name, code);
+                symbols.Add(ss);
+                i += level + 9;
+            }
+            return symbols;
+        }
+        static string MakeDecryptText(List<Symbol> symbols, string DecryptText)
+        {
+            string NewText = "";
+            while (DecryptText.Length!=0)
+            {
+                foreach (var i in symbols)
+                {
+                    if ((DecryptText.Length != 0) && (DecryptText.StartsWith(i.code)))
+                    {
+                        NewText += (char)i.name;
+                        DecryptText = DecryptText.Substring(i.code.Length);
+
+                    }
+                }
+            }
+            return NewText;
+        }
+        static void WriteNormalText(string NormalText)
+        {
+            Console.WriteLine("Введите путь к файлу с раскодированным текстом");
+            var path = Console.ReadLine();
+            try
+            {
+                using (StreamWriter sw = new StreamWriter(path, false, System.Text.Encoding.Default))
+                {
+                    sw.Write(NormalText);
+                    sw.Close();
                 }
             }
             catch (Exception e)
@@ -262,7 +318,7 @@ namespace Huffman_s_algorithm
         public string code { get; set; }
         public string level { get; set; }
         public Symbol(int n) { name = n; frequency = 1; code = ""; level = "1"; }
-        public Symbol(int n, int f, string c) { name = n; frequency = f; code = c;}
+        public Symbol(int n, string c) { name = n; code = c;}
         public int CompareTo(Symbol s)
         {
             return this.name.CompareTo(s.name);
